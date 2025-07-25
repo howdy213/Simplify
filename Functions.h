@@ -1,91 +1,91 @@
 #pragma once
-#include <iostream>
-#include<string.h>
-#include"Print.h"
-#include<math.h>
-#include<windows.h>
-#include<stdarg.h>
 #include"Formula.h"
-#define kd(x) ((GetAsyncKeyState(x)&0x8000)?1:0)
-#define color(color1,color2) (SetConsoleTextAttribute(wout, FOREGROUND_INTENSITY|color1*16+color2))
-#define slen(array) (sizeof(array)/sizeof(array[0]))
-#define CHAR_SIZE 200
-#define MON_SIZE 50
-#define MON_NUM 2
-enum OPERATOR {ADD=1, SUB, MUL, DIV, POW, SIN, COS, TAN, ASIN, ACOS, ATAN , NONE};
+#include"Print.h"
+#include"Types.h"
+#include<iostream>
+#include<math.h>
+#include<stdarg.h>
+#include<string>
+#include<string.h>
+#include<windows.h>
+using namespace std;
 struct Unks {
-	Unks* next;
-	short unk;
-	int exp;
+	pUnks next = nullptr;
+	short unk = 0;
+	integer exp = 1;
 };
-struct Mon { //单项式
-	int coe;//系数
-	Unks* unks;
-	Mon* next;
+struct Mon { //单项式,多项式即单项式链表
+	integer coe = 0;//系数
+	pUnks unks = nullptr;
+	pMon next = nullptr;
 };
 struct Node {
-	int op;
-	Node* next[MON_NUM];
-	char exp[CHAR_SIZE];
+	int op = 0;
+	pNode next[MON_NUM] = {};
+	string exp;
 };
 struct Pol { //多项式
-	int op;//运算符号
-	Pol* next[MON_NUM];//二叉树
-	Mon* exp[2];//分子分母
+	int op = 0;//运算符号
+	pPol next[MON_NUM] = {};//二叉树
+	pMon exp[2];//分子分母
 };
 //-------------------------------------------------------//
-double CharToNum(char* str);
-bool CutString(char* exp, int start, int end, char* back, bool mode);
-int FindPairBra(int pos, char* str);
-int CharToOp(char* str);
-void OpToChar(int op, char* str);
+bool kd(int x);
+rational pow(rational x, integer y);
 //-------------------------------------------------------//
-Unks* NewUnk(short unk,int exp);
-int UnkLen(Unks* head);
-Unks* UnkTurnI(Unks* head, int index);
-Unks* UnkTurnU(Unks* head, short unk);
-Unks* UnkInsert(Unks* head, short unk, int exp,bool ReHead=true);
-bool UnkDelete(Unks* head,short unk);
-void UnkSort(Unks* head);
-Unks* UnksMul(Unks* first, Unks* second);
-void UnksDel(Unks* head);
-double UnksCulc(Unks* head, Frame* fs);
+rational StringToNum(string str);
+bool SplitString(string exp, int start, int end, string& res, bool mode);
+int FindBracket(int pos, string str);
+int CharToOp(string str);
+void OpToChar(int op, string& str);
 //-------------------------------------------------------//
-Node* NewNode();
-int Parse3_Root(Node* node);
-void Parse3_End(Node* head, Pol* pol);//遍历(递归)
-void Parse3_Print(Node* head, int mode, POINT xy);//TODO
-void NodeDebug(Node* node);
+pUnks NewUnk(short unk, integer exp);
+int UnkLen(pUnks head);
+pUnks UnkTurnI(pUnks head, integer index);
+pUnks UnkTurnU(pUnks head, short unk);
+pUnks UnkInsert(pUnks head, short unk, integer exp, bool ReHead = true);
+bool UnkDelete(pUnks head, short unk);
+void UnkSort(pUnks head);
+pUnks UnksMul(pUnks first, pUnks second);
+void UnksDel(pUnks head);
+rational UnksCulc(pUnks head, Frame* fs);
 //-------------------------------------------------------//
-bool IsMonExist(Mon* one);
-Mon* NewMon(int coe = 0, int num = 0, ...);//初始化
-void MonClear(Mon* one);
-Mon* CopyMon(Mon* one);
-Mon* CharToMon(char* exp);
-bool IsMonSame(Mon* first, Mon* second);
-void MonPrint(Mon* one,bool PrintH=true);//输出单项式
+pNode NewNode();
+int Parse3_op(string in, bool* next, pNode node, char op1, char op2, int op11, int op22);
+int Parse3_Root(pNode node);
+void Parse3_End(pNode head, pPol pol);//遍历(递归)
+void Parse3_Print(pNode head, int mode, POINT xy);//TODO
+void NodeDebug(pNode node);
 //-------------------------------------------------------//
-void MonsPrint(Mon* ones);//输出单项式数组
-//void MonsPrintDebug(Mon* ones, int length);//调试输出
-Mon* MonsAdd(Mon* first, Mon* second);//+
-Mon* MonsOpp(Mon* one);//-
-Mon* MonsSub(Mon* first, Mon* second);//-
-Mon* MonMul(Mon* first, Mon* second);//*
-Mon* MonsMul(Mon* first, Mon* second);///
-void MonsDel(Mon* head);
-double MonCulc(Mon* mon, Frame* fs);
+bool IsMonExist(pMon one);
+pMon NewMon(integer coe = 0, int num = 0, ...);//初始化
+void MonClear(pMon one);
+pMon CopyMon(pMon one);
+pMon CharToMon(string exp);
+bool IsMonSame(pMon first, pMon second);
+void MonPrint(pMon one, bool PrintH = true);//输出单项式
 //-------------------------------------------------------//
-Pol* NewPol();//初始化
-void PolAdd(Pol* first, Pol* second, Pol* back);
-void PolSub(Pol* first, Pol* second, Pol* back);
-void PolMul(Pol* first, Pol* second, Pol* back);
-void PolDiv(Pol* first, Pol* second, Pol* back);
-void PolDel(Pol* head);
-void PolsDel(Pol* head);
-void PolPrint(Pol* node);
-void PolsPrint(Pol* node);
-void Parse4_Print(Pol* head, int mode, POINT xy);
-void PolDebug(Pol* node);
-void PolSimp(Pol* head);
-double PolCulc(Pol* head, Frame* fs);
+void MonsPrint(pMon ones);//输出单项式数组
+//void MonsPrintDebug(pMon ones, int length);//调试输出
+pMon MonsAdd(pMon first, pMon second);//+
+pMon MonsOpp(pMon one);//-
+pMon MonsSub(pMon first, pMon second);//-
+pMon MonMul(pMon first, pMon second);//*
+pMon MonsMul(pMon first, pMon second);//*
+void MonsDel(pMon head);
+rational MonCulc(pMon mon, Frame* fs);
+//-------------------------------------------------------//
+pPol NewPol();//初始化
+void PolAdd(pPol first, pPol second, pPol back);
+void PolSub(pPol first, pPol second, pPol back);
+void PolMul(pPol first, pPol second, pPol back);
+void PolDiv(pPol first, pPol second, pPol back);
+void PolDel(pPol head);
+void PolsDel(pPol head);
+void PolPrint(pPol node);
+void PolsPrint(pPol node);
+void Parse4_Print(pPol head, int mode, POINT xy);
+void PolDebug(pPol node);
+void PolSimp(pPol head);
+rational PolCulc(pPol head, Frame* fs);
 //-------------------------------------------------------//

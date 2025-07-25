@@ -1,64 +1,75 @@
-#include"Functions.h"
-#include"Frame.h"
+#include "ConsoleOp.h"
+#include "Frame.h"
+#include "Functions.h"
+#include <cassert>
+
+#ifdef  _DEBUG
+#define new new( _NORMAL_BLOCK, __FILE__, __LINE__)
+#endif // _DEBUG
+
 int Floor = -1;
 int Pos3 = (int)pow(2, 7);
+
 //-------------------------------------------------------//
-//sscanf
-double CharToNum(char* str) {
-	int length = strlen(str);
+
+bool kd(int x) {
+	return(GetAsyncKeyState(x) & 0x8000) ? 1 : 0;
+}
+
+rational pow(rational x, integer y) {
+	if (y == 0)return 1;
+	bool sign = y > 0;
+	for (integer i = abs(y); i >= 2; i--)x *= x;
+	return sign ? x : 1 / x;
+}
+
+rational StringToNum(string str) {
+	int dot = str.find('.');
+	if (dot == -1)return rational(str);
+	str = str.substr(0, dot) + str.substr(dot + 1);
+	rational res(str);
+	res /= pow(10, dot);
+	string a = res.convert_to<string>();
+	return res;
+	/*
+	int length = str.length();
 	length = (length >= 17) ? 17 : length;
-	double num = 0.0;
+	rational num = 0.0;
 	int point = 0;
 	for (; point <= length - 1 && str[point] != '.'; point++)if (!(48 <= str[point] && str[point] <= 57))return 0;
 	for (int n = 0; n <= length - 1; n++) {
 		if (n == point)continue;
 		num += ((str[n] - 48) * pow(10, -n + point - (int)(n <= point)));
 	}
-	return num;
+	return num;*/
 }
-//从start至end(包括end),当mode==false时，代表倒数
 
-bool CutString(char* exp, int start, int end, char* back, bool mode) {
+//从start至end(包括end),当mode==false时，代表倒数
+bool SplitString(string exp, int start, int end, string& res, bool mode) {
 	if (start < 0 || end < 0)return false;
-	int elength = strlen(exp) - 1;//末尾下标
-	if (mode == false)end = elength - end;
-	int blength = end - start + 1;
-	int pos = 0;
-	if (end > elength || start > elength)return false;
-	char* wait = new char[elength + 1];
-	for (; pos <= elength; pos++)wait[pos] = exp[pos];//交换；
-	for (pos = 0; pos < CHAR_SIZE; pos++)back[pos] = '\0';
-	for (pos = 0; pos <= blength - 1; pos++)back[pos] = wait[start + pos];
-	delete[] wait;
-	wait = nullptr;
+	int length = exp.length() - 1;//末尾下标
+	if (end > length || start > length)return false;
+	if (mode == false)end = length - end;
+	res = exp.substr(start, end - start + 1);
 	return true;
-}/*
-bool CutString(char* exp, int start, int end, char* back, bool mode) {
-	if (start < 0 || end < 0)return false;
-	int elength = strlen(exp) - 1;//末尾下标
-	if (mode == false)end = elength - end;
-	int blength = end - start;
-	if (end > elength || start > elength)return false;
-	int pos = 0;
-	for (; (pos <= blength) && (start + pos <= elength); pos++)back[pos] = exp[start + pos];
-	for (; pos <= blength; pos++)back[pos] = '\0';
-	return true;
-}*/
+}
+
 //)->(,返回（的位置
-int FindPairBra(int pos, char* str) {
+int FindBracket(int pos, string str) {
 	pos--;
 	int bra = 1;
 	for (; bra != 0 && pos >= 0; pos--)bra = bra + (str[pos] == ')') - (str[pos] == '(');
 	pos++;
 	if (bra != 0 && pos == 0) {
 		pos = -1;
-		printf("ERROR_1\n");
+		assert(1);
 	}
 	return pos;
 }
+//-------------------------------------------------------//
 //-TODO:add more operators
-int CharToOp(char* str) {
-	int length = strlen(str);
+int CharToOp(string str) {
+	int length = str.length();
 	switch (str[0]) {
 	case '+':
 		return ADD;
@@ -78,7 +89,7 @@ int CharToOp(char* str) {
 	}
 }
 //TODO:add more operators
-void OpToChar(int op, char* str) {
+void OpToChar(int op, string& str) {
 	switch (op) {
 	case ADD:
 		str[0] = '+';
@@ -95,22 +106,22 @@ void OpToChar(int op, char* str) {
 	case POW:
 		str[0] = '^';
 	default:
-		str = nullptr;
+		str = "";
 		break;
 	}
 }
 //-------------------------------------------------------//
-Unks* NewUnk(short unk, int exp) {
-	Unks* res = new Unks;
+pUnks NewUnk(short unk, integer exp) {
+	pUnks res(new Unks);
 	res->next = nullptr;
 	res->exp = exp;
 	res->unk = unk;
 	return res;
 }
-Unks* CopyUnks(Unks* unks) {
+pUnks CopyUnks(pUnks unks) {
 	if (unks == nullptr)return nullptr;
-	Unks* res = NewUnk(unks->unk, unks->exp);
-	Unks* bak = res;
+	pUnks res = NewUnk(unks->unk, unks->exp);
+	pUnks bak = res;
 	while (true) {
 		unks = unks->next;
 		if (unks != nullptr)res->next = NewUnk(unks->unk, unks->exp);
@@ -118,7 +129,7 @@ Unks* CopyUnks(Unks* unks) {
 		res = res->next;
 	}
 }
-bool IsUnksSame(Unks* first, Unks* second) {
+bool IsUnksSame(pUnks first, pUnks second) {
 	if (first == second)return true;
 	if (first == nullptr || second == nullptr)return false;
 	while (first->exp == second->exp && first->unk == second->unk) {
@@ -129,22 +140,23 @@ bool IsUnksSame(Unks* first, Unks* second) {
 	}
 	return false;
 }
-void UnksPrint(Unks* unks) {
+void UnksPrint(pUnks unks) {
 	while (unks != nullptr) {
-		printf("%c", (char)unks->unk + 'a');
-		if (unks->exp != 1)printf("^%d", unks->exp);
+		cout << (char)((char)unks->unk + 'a');
+		if (unks->exp != 1)cout << '^' << unks->exp;
 		unks = unks->next;
 	}
 }
 
-Unks* UnkTurnI(Unks* head, int index) {
+pUnks UnkTurnI(pUnks head, integer index) {
 	while (index >= 2 && head != nullptr) {//第n个只需执行n-2次
 		index--;
 		head = head->next;
 	}
 	return head;
 }
-Unks* UnkTurnU(Unks* head, short unk) {
+
+pUnks UnkTurnU(pUnks head, short unk) {
 	while (head != nullptr) {
 		if (head->unk > unk)return nullptr;
 		else if (head->unk == unk)return head;
@@ -152,7 +164,8 @@ Unks* UnkTurnU(Unks* head, short unk) {
 	}
 	return nullptr;
 }
-int UnkLen(Unks* head) {
+
+int UnkLen(pUnks head) {
 	int len = 0;
 	while (head != nullptr) {
 		head->next;
@@ -160,10 +173,10 @@ int UnkLen(Unks* head) {
 	}
 	return len;
 }
-Unks* UnkInsert(Unks* head, short unk, int exp, bool ReHead) {
+pUnks UnkInsert(pUnks head, short unk, integer exp, bool ReHead) {
 	if (head == nullptr)return NewUnk(unk, exp);
-	Unks* rhead = head;
-	Unks* lhead = nullptr;
+	pUnks rhead = head;
+	pUnks lhead = nullptr;
 	while (head != nullptr) {
 		if (head->unk < unk) {
 			lhead = head;
@@ -174,7 +187,7 @@ Unks* UnkInsert(Unks* head, short unk, int exp, bool ReHead) {
 			return ReHead ? rhead : head;
 		}
 		else {
-			Unks* u = NewUnk(unk, exp);
+			pUnks u = NewUnk(unk, exp);
 			u->next = head;
 			if (lhead != nullptr) {
 				lhead->next = u;
@@ -186,48 +199,48 @@ Unks* UnkInsert(Unks* head, short unk, int exp, bool ReHead) {
 	lhead->next = NewUnk(unk, exp);//此时，unk是最后一项
 	return rhead;
 }
-bool UnkDelete(Unks* head, short unk) {
+bool UnkDelete(pUnks head, short unk) {
 	return false;
 }
-void UnkSort(Unks* head) {
+void UnkSort(pUnks head) {
 	return;
 }
-Unks* UnksMul(Unks* first, Unks* second) {
+pUnks UnksMul(pUnks first, pUnks second) {
 	if (first == nullptr && second == nullptr)return nullptr;
 	if (first == nullptr || second == nullptr) {
-		Unks* re = (first != nullptr) ? first : second;
+		pUnks re = (first != nullptr) ? first : second;
 		return CopyUnks(re);
 	}
-	Unks* res = CopyUnks(first);
+	pUnks res = CopyUnks(first);
 	if (res->unk > second->unk) {
 		res = UnkInsert(res, second->unk, second->exp, false);
 		second = second->next;
 	}
-	Unks* head = res;
+	pUnks head = res;
 	while (second != nullptr) {
 		res = UnkInsert(res, second->unk, second->exp, false);
 		second = second->next;
 	}
 	return head;
 }
-void UnksDel(Unks* head) {
+void UnksDel(pUnks head) {
 	if (head == nullptr)return;
 	UnksDel(head->next);
-	delete head;
+	//delete head;
 }
-double UnksCulc(Unks* head, Frame* fs){
+rational UnksCulc(pUnks head, Frame* fs) {
 	if (head == nullptr)return 1.0;
 	return UnksCulc(head->next, fs) * pow(fs->GetValue(head->unk + 'a'), head->exp);
 }
 //-------------------------------------------------------//
-bool IsMonExist(Mon* one) {
+bool IsMonExist(pMon one) {
 	if (one == nullptr)return false;
 	else if (one->coe == 0)return false;
 	else return true;
 }
 //初始化
-Mon* NewMon(int coe, int num, ...) {
-	Mon* mon = new Mon;
+pMon NewMon(integer coe, int num, ...) {
+	pMon mon(new Mon);
 	mon->unks = nullptr;
 	mon->coe = coe;
 	mon->next = nullptr;
@@ -242,27 +255,26 @@ Mon* NewMon(int coe, int num, ...) {
 	va_end(arg);
 	return mon;
 }
-Mon* NewMon(int coe, Unks* unks) {
-	Mon* re = new Mon;
+pMon NewMon(integer coe, pUnks unks) {
+	pMon re(new Mon);
 	re->coe = coe;
 	re->unks = unks;
 	re->next = nullptr;
 	return re;
 }
-void MonClear(Mon* one) {
+void MonClear(pMon one) {
 	if (one == nullptr)return;
 	one->coe = 0;
 	one->unks = nullptr;
 }
-Mon* MonInsert(Mon* mon, int coe, Unks* unks) {
+pMon MonInsert(pMon mon, integer coe, pUnks unks) {
 	if (mon == nullptr)return NewMon(coe, unks);
-	Mon* lmon = nullptr;
-	Mon* rmon = mon;
+	pMon lmon = nullptr;
+	pMon rmon = mon;
 	if (IsUnksSame(mon->unks, unks)) {
 		mon->coe += coe;
 		if (mon->coe == 0) {
 			rmon = mon->next;
-			delete[] mon;
 			return rmon;
 		}
 		return mon;
@@ -271,8 +283,7 @@ Mon* MonInsert(Mon* mon, int coe, Unks* unks) {
 		if (IsUnksSame(mon->next->unks, unks)) {
 			mon->next->coe += coe;
 			if (mon->next->coe == 0) {
-				Mon* nmon = mon->next->next;
-				delete[] mon->next;
+				pMon nmon = mon->next->next;
 				mon->next = nmon;
 			}
 			return rmon;
@@ -285,19 +296,19 @@ Mon* MonInsert(Mon* mon, int coe, Unks* unks) {
 	mon->next = NewMon(coe, unks);
 	return rmon;
 }
-Mon* CopyMon(Mon* one) {
+pMon CopyMon(pMon one) {
 	if (!IsMonExist(one))return nullptr;
-	Mon* back = new Mon;
+	pMon back(new Mon);
 	back->coe = one->coe;
 	back->unks = CopyUnks(one->unks);
 	return back;
 }
-Mon* CharToMon(char* exp) {
+pMon CharToMon(string exp) {
 	if (exp == "")return nullptr;
 	int coe = 0;
-	Unks* unks = nullptr;
-	char str1[CHAR_SIZE] = {};
-	int length = strlen(exp);
+	pUnks unks = nullptr;
+	string str1;
+	int length = exp.length();
 	int pos1 = 0;
 	int LetterPos = 0;
 	bool dot1 = false;
@@ -307,10 +318,10 @@ Mon* CharToMon(char* exp) {
 			else dot1 = true;
 		}
 	}
-	CutString(exp, 0, pos1 - 1, str1, true);
-	int a = strlen(str1);
-	if (strlen(str1) == 0)coe = 1;
-	else coe = (int)CharToNum(str1);
+	SplitString(exp, 0, pos1 - 1, str1, true);
+	int a = str1.length();
+	if (a == 0)coe = 1;
+	else coe = (int)StringToNum(str1);
 
 	for (; pos1 <= length - 1;) {
 		char unk = exp[pos1];
@@ -331,11 +342,9 @@ Mon* CharToMon(char* exp) {
 				}
 				pos2++;
 			}
-			char* str2 = new char[CHAR_SIZE];
-			CutString(exp, pos1, pos2 - 1, str2, true);
-			int expo = (int)CharToNum(str2);
-			delete[]str2;
-			str2 = nullptr;
+			string str2;
+			SplitString(exp, pos1, pos2 - 1, str2, true);
+			int expo = (int)StringToNum(str2);
 			if (unk > 'z' || unk < 'a')return nullptr;//
 			unks = UnkInsert(unks, unk - 'a', expo, true);
 			pos1 = pos2;
@@ -344,27 +353,27 @@ Mon* CharToMon(char* exp) {
 	}
 	return NewMon(coe, unks);
 }
-bool IsMonSame(Mon* first, Mon* second) {
+bool IsMonSame(pMon first, pMon second) {
 	if (first == nullptr || second == nullptr)return false;
 	if (first->coe == 0 || second->coe == 0)return false;
 	return IsUnksSame(first->unks, second->unks);
 }
 //输出单项式
-void MonPrint(Mon* one, bool PrintH) {
+void MonPrint(pMon one, bool PrintH) {
 	if (!IsMonExist(one))return;
 	else {
 		if (one->coe > 0 && PrintH)printf("+");
 		if (one->coe == 1 && one->unks == nullptr)printf("1");
-		else if (one->coe != 1)printf("%d", one->coe);
+		else if (one->coe != 1)cout << one->coe;
 		UnksPrint(one->unks);
 	}
 }
 //-------------------------------------------------------//
 //输出单项式数组
-Mon* CopyMons(Mon* mons) {
+pMon CopyMons(pMon mons) {
 	if (!IsMonExist(mons))return nullptr;
-	Mon* head = CopyMon(mons);
-	Mon* re = head;
+	pMon head = CopyMon(mons);
+	pMon re = head;
 	while (mons != nullptr) {
 		mons = mons->next;
 		head->next = CopyMon(mons);
@@ -372,61 +381,27 @@ Mon* CopyMons(Mon* mons) {
 	}
 	return re;
 }
-void MonsPrint(Mon* mons) {
+void MonsPrint(pMon mons) {
 	while (mons != nullptr) {
 		MonPrint(mons);
 		mons = mons->next;
 	}
 }
-/*
-void Simp1(Mon** ones, int length) {
-	if (ones == nullptr)return;
-	int pos = 0;
-	for (int m = 0; m <= length - 1; m++)
-		for (int n = m + 1; n <= length - 1; n++) {
-			if (IsSame(ones[m], ones[n])) {
-				ones[m]->coe += ones[n]->coe;
-				ones[n] = nullptr;
-			};
-		};
-};//合并同类项
-void Simp2(Mon** ones, int length) {
-	if (ones == nullptr)return;
-	Mon** mons = new Mon * [length];
-	int pos = 0;
-	for (int n = 0; n <= length - 1; n++) {
-		mons[n] = nullptr;
-		if (IsExist(ones[n])) {
-			mons[pos] = ones[n];
-			pos++;
-		}
-		ones[n] = nullptr;
-	}
-	for (int n = 0; n <= length - 1; n++)ones[n] = mons[n];
-	delete[] mons;
-	mons = nullptr;
-	return;
-}//整理
-void Simp(Mon** ones, int length) {
-	Simp1(ones, length);
-	Simp2(ones, length);
-}*/
-//要求三个数组长度皆为length(=MON_SIZE),
-Mon* MonsAdd(Mon* first, Mon* second) {
+pMon MonsAdd(pMon first, pMon second) {
 	if (first == nullptr && second == nullptr)return nullptr;
 	if (first == nullptr || second == nullptr) {
-		Mon* re = (first != nullptr) ? first : second;
+		pMon re = (first != nullptr) ? first : second;
 		return CopyMons(re);
 	}
-	Mon* res = CopyMons(first);
+	pMon res = CopyMons(first);
 	while (second != nullptr) {
 		res = MonInsert(res, second->coe, second->unks);
 		second = second->next;
 	}
 	return res;
 };//+
-Mon* MonsOpp(Mon* mon) {
-	Mon* re = NewMon(mon->coe, mon->unks);
+pMon MonsOpp(pMon mon) {
+	pMon re = NewMon(mon->coe, mon->unks);
 	while (mon != nullptr) {
 		re->next = NewMon(-mon->coe, mon->unks);
 		mon = mon->next;
@@ -435,22 +410,22 @@ Mon* MonsOpp(Mon* mon) {
 	return re;
 }
 //
-Mon* MonsSub(Mon* first, Mon* second) {
-	Mon* opp = MonsOpp(second);
+pMon MonsSub(pMon first, pMon second) {
+	pMon opp = MonsOpp(second);
 	return MonsAdd(first, opp);
 }
-Mon* MonMul(Mon* first, Mon* second) {
+pMon MonMul(pMon first, pMon second) {
 	if (!(IsMonExist(first) && IsMonExist(second)))return nullptr;
 	return NewMon(first->coe * second->coe, UnksMul(first->unks, second->unks));
 }
-Mon* MonsMul(Mon* first, Mon* second) {
-	Mon* re = MonMul(first, second);
-	Mon* head = re;
-	Mon* shead = second;
+pMon MonsMul(pMon first, pMon second) {
+	pMon re = MonMul(first, second);
+	pMon head = re;
+	pMon shead = second;
 	second = second->next;
-	while (first != nullptr) {
+	while (first != nullptr) {//交叉相乘
 		while (second != nullptr) {
-			Mon* mul = MonMul(first, second);
+			pMon mul = MonMul(first, second);
 			MonInsert(re, mul->coe, mul->unks);
 			second = second->next;
 		}
@@ -459,33 +434,34 @@ Mon* MonsMul(Mon* first, Mon* second) {
 	}
 	return head;
 }
-void MonsDel(Mon* head) {
+void MonsDel(pMon head) {
 	if (head == nullptr)return;
 	MonsDel(head->next);
 	head->coe = 0;
-	delete head->next;
+	//delete head->next;
 	UnksDel(head->unks);
 }
-double MonCulc(Mon* mon, Frame* fs)
+rational MonCulc(pMon mon, Frame* fs)
 {
 	if (mon == nullptr)return 0.0;
-	return MonCulc(mon->next, fs) + mon->coe*UnksCulc(mon->unks, fs);
+	return MonCulc(mon->next, fs) + mon->coe * UnksCulc(mon->unks, fs);
 }
 //-------------------------------------------------------//
 //node
 //新建并返回Node
-Node* NewNode() {
-	Node* node = new Node;
+pNode NewNode() {
+	pNode node(new Node);
 	node->op = 0;
-	for (int pos = 0; pos <= MON_SIZE - 1; node->exp[pos] = '\0', pos++);
 	for (int n = 0; n <= MON_NUM - 1; n++)node->next[n] = nullptr;
 	return node;
 }
 //返回操作的位置
-int Parse3_op(int length, char* in, bool* next, Node* node, char op1, char op2, int op11, int op22) {
+int Parse3_op(string in, bool* next, pNode node, char op1, char op2, int op11, int op22) {
+	int length = in.length();
 	int pos = 0;
 	for (pos = length - 1; pos >= 0; pos--) {
-		if (in[pos] == ')')pos = FindPairBra(pos, in) - 1;//跳过（）
+		if (in[pos] == ')')pos = FindBracket(pos, in) - 1;//跳过（）
+		if (pos == -1)break;
 		if (in[pos] == op1)node->op = op11;
 		if (in[pos] == op2)node->op = op22;
 		if (in[pos] == op1 || in[pos] == op2) {
@@ -495,39 +471,40 @@ int Parse3_op(int length, char* in, bool* next, Node* node, char op1, char op2, 
 	}
 	return pos;
 }
-int Parse3_Root(Node* node) {
-	char in[CHAR_SIZE] = {};
-	CutString(node->exp, 0, 0, in, false);
-	int length = strlen(in);
+int Parse3_Root(pNode node) {
+	string in;
+	SplitString(node->exp, 0, 0, in, false);
+	int length = in.length();
 	int bra = 0, pos = 0;
 	bool next = true;
 	if (next) {
-		pos = Parse3_op(length, in, &next, node, '+', '-', ADD, SUB);
+		pos = Parse3_op(in, &next, node, '+', '-', ADD, SUB);
 	}//+ -
 	if (next) {
-		pos = Parse3_op(length, in, &next, node, '*', '/', MUL, DIV);
+		pos = Parse3_op(in, &next, node, '*', '/', MUL, DIV);
 	}//* /
 	if (next) {
-		pos = Parse3_op(length, in, &next, node, '^', '\0', POW, NONE);
+		pos = Parse3_op(in, &next, node, '^', '\0', POW, NONE);
 	}
 	if (!next) {
 		node->next[0] = NewNode();
-		if (CutString(in, 0, pos - 1, node->next[0]->exp, true));
+		if (SplitString(in, 0, pos - 1, node->next[0]->exp, true));
 		else printf("ERROR_2\n");
 		node->next[1] = NewNode();
-		if (CutString(in, pos + 1, 0, node->next[1]->exp, false));
+		if (SplitString(in, pos + 1, 0, node->next[1]->exp, false));
 		else printf("ERROR_3\n");
 		for (int m = 0; m <= length - 1; m++)node->exp[m] = '\0';
 		return pos;
 	}
 	else {
-		CutString(in, 0, 0, node->exp, false);
+		SplitString(in, 0, 0, node->exp, false);
 		return -1;
 	};
 };
-void Parse3_End(Node* head, Pol* pol) {
+void Parse3_End(pNode head, pPol pol) {
 	//()并不参加运算，所以要除去，[]/{}同理
-	while (head->exp[strlen(head->exp) - 1] == ')' && FindPairBra(strlen(head->exp) - 1, head->exp) == 0)CutString(head->exp, 1, 1, head->exp, false);
+	//if (!head)return;
+	if (head->exp != "")while (head->exp[head->exp.length() - 1] == ')' && FindBracket(head->exp.length() - 1, head->exp) == 0)SplitString(head->exp, 1, 1, head->exp, false);
 	//如果是单项式
 	if (CharToMon(head->exp) != nullptr) {
 		pol->exp[0] = CharToMon(head->exp);
@@ -543,7 +520,7 @@ void Parse3_End(Node* head, Pol* pol) {
 		for (int n = 0; n <= MON_NUM - 1; n++)Parse3_End(head->next[n], pol->next[n]);
 	}
 };//遍历
-void Parse3_Print(Node* head, int mode, POINT xy) {
+void Parse3_Print(pNode head, int mode, POINT xy) {
 	Floor++;
 	if (mode == 1) {
 		Pos3 += (int)pow(2, 6 - Floor);
@@ -551,18 +528,18 @@ void Parse3_Print(Node* head, int mode, POINT xy) {
 	else {
 		Pos3 -= (int)pow(2, 6 - Floor);
 	}
-	gotoxy(Pos3 + (int)xy.x, Floor + (int)xy.y);
+	ConsoleOp::gotoxy(Pos3 + (int)xy.x, Floor + (int)xy.y);
 	if (head->exp[0] == '\0') {
-		char c[5] = {};
+		string c = "\0\0\0\0\0";
 		OpToChar(head->op, c);
-		printf("%s", c);
+		printf("%s", c.c_str());
 		Parse3_Print(head->next[0], 0, xy);
 		Parse3_Print(head->next[1], 1, xy);
 		Floor--;
 		Pos3 += (int)pow(2, 6 - Floor - 1);
 	}
 	else {
-		printf("%s", head->exp);
+		printf("%s", head->exp.c_str());
 		if (mode == 1) {
 			Pos3 -= (int)pow(2, 6 - Floor);
 		}
@@ -572,16 +549,16 @@ void Parse3_Print(Node* head, int mode, POINT xy) {
 		Floor--;
 		return;
 	};
-}//TODO
-void NodeDebug(Node* node) {
+}
+void NodeDebug(pNode node) {
 	while (1) {
 		if (node == nullptr) {
 			printf("-to-");
 			return;
 		}
-		char c[5] = {};
+		string c = "\0\0\0\0\0";
 		OpToChar(node->op, c);
-		printf("%s%s\n", node->exp, c);
+		printf("%s%s\n", node->exp.c_str(), c.c_str());
 		while (1) {
 			if (kd(VK_LEFT)) {
 				while (kd(VK_LEFT))Sleep(1);
@@ -602,8 +579,8 @@ void NodeDebug(Node* node) {
 }
 //-------------------------------------------------------//
 //初始化
-Pol* NewPol() {
-	Pol* mons = new Pol;
+pPol NewPol() {
+	pPol mons(new Pol);
 	mons->op = 0;
 	mons->exp[0] = nullptr;
 	mons->exp[1] = nullptr;
@@ -611,10 +588,10 @@ Pol* NewPol() {
 	mons->next[1] = nullptr;
 	return mons;
 }
-bool DeleteNode(Node* head) {
+bool DeleteNode(pNode head) {
 	return false;
 }
-void PolPrint(Pol* node) {
+void PolPrint(pPol node) {
 	//char c[5] = {};
 	//OpToChar(node->op, c);
 	//printf("%s", c);
@@ -625,39 +602,40 @@ void PolPrint(Pol* node) {
 	printf("\n");
 }
 //TODO:
-void PolsPrint(Pol* node) {
+void PolsPrint(pPol node) {
 	PolPrint(node);
 }
-void PolAdd(Pol* first, Pol* second, Pol* back) {
-	Mon* b = MonsSub(first->exp[1], second->exp[1]);
+
+void PolAdd(pPol first, pPol second, pPol back) {
+	pMon b = MonsSub(first->exp[1], second->exp[1]);
 	if (!IsMonExist(b)) {
 		back->exp[0] = MonsAdd(first->exp[0], second->exp[0]);
 		back->exp[1] = MonsAdd(first->exp[1], nullptr);
 		return;
 	}
 	back->exp[1] = MonsMul(first->exp[1], second->exp[1]);
-	Mon* u1 = MonsMul(first->exp[0], second->exp[1]);
-	Mon* u2 = MonsMul(first->exp[1], second->exp[0]);
+	pMon u1 = MonsMul(first->exp[0], second->exp[1]);
+	pMon u2 = MonsMul(first->exp[1], second->exp[0]);
 	back->exp[0] = MonsAdd(u1, u2);
 }
-void PolSub(Pol* first, Pol* second, Pol* back) {
-	Pol* op = NewPol();
+void PolSub(pPol first, pPol second, pPol back) {
+	pPol op = NewPol();
 	op->exp[0] = MonsOpp(second->exp[0]);
 	op->exp[1] = MonsAdd(second->exp[1], nullptr);
 	PolAdd(first, op, back);
-	delete[] op;
+	//delete op;
 	return;
 }
-void PolMul(Pol* first, Pol* second, Pol* back) {
+void PolMul(pPol first, pPol second, pPol back) {
 	back->exp[0] = MonsMul(first->exp[0], second->exp[0]);
 	back->exp[1] = MonsMul(first->exp[1], second->exp[1]);
 }
-void PolDiv(Pol* first, Pol* second, Pol* back) {
+void PolDiv(pPol first, pPol second, pPol back) {
 	back->exp[0] = MonsMul(first->exp[0], second->exp[1]);
 	back->exp[1] = MonsMul(first->exp[1], second->exp[0]);
 }
 
-void PolDel(Pol* head)
+void PolDel(pPol head)
 {
 	if (head == nullptr)return;
 	head->op = 0;
@@ -665,11 +643,11 @@ void PolDel(Pol* head)
 	head->exp[0] = nullptr;
 	MonsDel(head->exp[1]);
 	head->exp[1] = nullptr;
-	free(head);
+	//delete head;
 	return;
 }
 
-void PolsDel(Pol* head) {
+void PolsDel(pPol head) {
 	if (head == nullptr)return;
 	PolsDel(head->next[0]);
 	PolsDel(head->next[1]);
@@ -677,7 +655,7 @@ void PolsDel(Pol* head) {
 	PolDel(head->next[1]);
 	return;
 }
-void Parse4_Print(Pol* head, int mode, POINT xy) {
+void Parse4_Print(pPol head, int mode, POINT xy) {
 	Floor++;
 	if (mode == 1) {
 		Pos3 += pow(2, 6 - Floor);
@@ -685,11 +663,11 @@ void Parse4_Print(Pol* head, int mode, POINT xy) {
 	else {
 		Pos3 -= pow(2, 6 - Floor);
 	}
-	gotoxy(Pos3 + (int)xy.x, Floor + (int)xy.y);
+	ConsoleOp::gotoxy(Pos3 + (int)xy.x, Floor + (int)xy.y);
 	if (IsMonExist(head->exp[0])) {
-		char c[5] = {};
+		string c = "\0\0\0\0\0";
 		OpToChar(head->op, c);
-		printf("%s", c);
+		printf("%s", c.c_str());
 		Parse4_Print(head->next[0], 0, xy);
 		Parse4_Print(head->next[1], 1, xy);
 		Floor--;
@@ -711,7 +689,7 @@ void Parse4_Print(Pol* head, int mode, POINT xy) {
 		return;
 	};
 }
-void PolDebug(Pol* node) {
+void PolDebug(pPol node) {
 	while (1) {
 		if (node == nullptr) {
 			printf("-to-\n");
@@ -737,7 +715,7 @@ void PolDebug(Pol* node) {
 	}
 }
 //culc
-void PolSimp(Pol* head) {
+void PolSimp(pPol head) {
 	if (head == nullptr)return;
 	for (int n = 0; n <= 1; n++)PolSimp(head->next[n]);
 	bool IsOp = false;
@@ -764,14 +742,14 @@ void PolSimp(Pol* head) {
 	//if (IsOp)for (int n = 0; n <= 1; n++)PolDel(head->next[n]);
 	return;
 }
-double PolCulc(Pol* head, Frame* fs)
+rational PolCulc(pPol head, Frame* fs)
 {
 	if (head == nullptr)return 0.0;
-	double a = PolCulc(head->next[0], fs);
-	double b = PolCulc(head->next[1], fs);
+	rational a = PolCulc(head->next[0], fs);
+	rational b = PolCulc(head->next[1], fs);
 	switch (head->op) {
 	case NONE:
-		return MonCulc(head->exp[0],fs)/MonCulc(head->exp[1],fs);
+		return MonCulc(head->exp[0], fs) / MonCulc(head->exp[1], fs);
 	case ADD:
 		return a + b;
 	case SUB:

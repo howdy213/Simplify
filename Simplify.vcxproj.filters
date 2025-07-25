@@ -30,6 +30,12 @@
     <ClInclude Include="Frame.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Types.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ConsoleOp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Print.cpp">
@@ -45,6 +51,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Frame.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ConsoleOp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,45 +1,46 @@
-#include"Frame.h"
 #include"Formula.h"
+#include"Frame.h"
 void Frame::AddFormula(Formula* f)
 {
-	int pos = 0;
-	for (; pos <= FOR_NUM; pos++)if (this->fs[pos] == nullptr)break;
-	this->fs[pos] = f;
+	if (!f)return;
+	for (int i = 0; i <= (int)fs.size() - 1; i++) {
+		if (fs[i] == nullptr) {
+			fs[i] = f;
+			return;
+		}
+	}
+	fs.push_back(f);
 }
 
 bool Frame::DeleteFormula(char id)
 {
-	int pos = this->FindFormula(id);
+	int pos = FindFormula(id);
 	if (pos == -1)return false;
-	delete this->fs[pos];
-	this->fs[pos] = nullptr;
+	delete fs[pos];
+	fs[pos] = nullptr;
 	return true;
 }
 
 void Frame::Culc()
 {
 	this->FsInvalid();
-	int pos = 0;
-	while (pos<=FOR_NUM)
-	{
-		if (this->fs[pos] != nullptr) {
-			this->fs[pos]->Culc();
+	for (int i = 0; i <= (int)fs.size() - 1; i++) {
+		if (this->fs[i] != nullptr) {
+			this->fs[i]->Culc();
 		}
-
 	}
 }
 
 void Frame::FsInvalid()
 {
-	int pos = 0;
-	while (pos <= FOR_NUM - 1) {
-		if (this->fs[pos] != nullptr) {
-			this->fs[pos]->IsUpdated = false;
+	for (int i = 0; i <= (int)fs.size() - 1; i++) {
+		if (this->fs[i] != nullptr) {
+			this->fs[i]->IsUpdated = false;
 		}
 	}
 }
 
-double Frame::GetValue(char id)
+rational Frame::GetValue(char id)
 {
 	int pos = this->FindFormula(id);
 	if (pos == -1)return DEFAULT_VALUE;
@@ -49,7 +50,10 @@ double Frame::GetValue(char id)
 
 int Frame::FindFormula(char id)
 {
-	int pos = 0;
-	for (; pos <= FOR_NUM - 1; pos++)if(this->fs[pos]!=nullptr)if (this->fs[pos]->id == id)break;
-	return (pos == FOR_NUM) ? -1 : pos;
+	for (int i = 0; i <= (int)fs.size() - 1; i++) {
+		if (this->fs[i] != nullptr) {
+			if(fs[i]->id == id)return i;
+		}
+	}
+	return -1;
 }

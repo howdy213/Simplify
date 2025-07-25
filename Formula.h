@@ -1,22 +1,26 @@
 #pragma once
 #include"Frame.h"
-struct Pol;
+#include"Types.h"
+#include<string>
+using namespace std;
 class Formula {
 public:
-	Pol* root = nullptr;
-	double value = 0;
-	bool IsUpdated;
-	char id = 0;
 	Formula(char id);
 	~Formula();
 	void AddToFrame(Frame* fs);
-	void Init(char* str);
-	void Init(Pol* root);
+	void Init(string str);
+	void Init(pPol root);
 	void Init(Formula exp);
-	void Assign(double value);
+	void Assign(rational value);
 	void Culc();
+	rational GetValue();
 	void Simplify();
 	void Print();
 private:
+	friend Frame;
+	char id = 0;
+	pPol root = nullptr;
+	rational value = 0;
+	bool IsUpdated;
 	Frame* fs;
 };
