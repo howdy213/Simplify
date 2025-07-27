@@ -61,7 +61,7 @@ bool IsMonExist(pMon one);
 pMon NewMon(integer coe = 0, int num = 0, ...);//初始化
 void MonClear(pMon one);
 pMon CopyMon(pMon one);
-pMon CharToMon(string exp);
+pMon StringToMon(string exp);
 bool IsMonSame(pMon first, pMon second);
 void MonPrint(pMon one, bool PrintH = true);//输出单项式
 //-------------------------------------------------------//

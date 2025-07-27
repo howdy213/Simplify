@@ -1,4 +1,4 @@
 #pragma once
 #include<windows.h>
-void PrintSetup(int num);
+void PrintTestTitle(int num);
 void Repeat(int num, char c);

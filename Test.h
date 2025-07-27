@@ -8,13 +8,13 @@
 using namespace std;
 void fun1(bool IsRunning) {
 	if (!IsRunning)return;
-	PrintSetup(1);
+	PrintTestTitle(1);
 	string str = "314.15926897932384626";
 	cout << StringToNum(str);
 }
 void fun2(bool IsRunning) {
 	if (!IsRunning)return;/*
-	SetupPrint(2);
+	PrintTestTitle(2);
 	pMon ones[MON_SIZE] = {};
 	ones[0] = NewMon(9, 4, 'x', 8, 'y', 6);
 	ones[1] = NewMon(-7, 4, 'x', 8, 'y', 6);
@@ -71,8 +71,8 @@ void fun2(bool IsRunning) {
 void fun3(bool IsRunning) {
 	if (!IsRunning) return;
 	system("mode con cols=200 lines=50");
-	PrintSetup(3);
-	string str = "324a^4/5b+(3456.3549387c*6754/(54^9+((5x/6/8t/9z^8))))";//+、-、*、/、^都是二目运算，需要二叉树，多目运算符考虑增加或归一
+	PrintTestTitle(3);
+	string str = "324a^4/5b+(3456.3549387c*6754/(54^9+((5x/6/8t/9z^8))))";
 	pNode node = NewNode();
 	pPol p15 = NewPol();
 	SplitString(str, 0, 0, node->exp, false);
@@ -83,15 +83,15 @@ void fun3(bool IsRunning) {
 }
 void fun4(bool IsRunning) {
 	if (!IsRunning) return;
-	PrintSetup(4);
+	PrintTestTitle(4);
 
 	char n14[50] = "1";
-	pMon m14 = CharToMon(n14);
+	pMon m14 = StringToMon(n14);
 	MonPrint(m14);
 }
 void fun5(bool IsRunning) {
 	if (!IsRunning)return;/*
-	SetupPrint(5);
+	PrintTestTitle(5);
 	pMon ones[MON_SIZE] = {};
 	ones[0] = NewMon(9, 4, 'x', 6, 'y', 6);
 	ones[1] = NewMon(-7, 4, 'x', 8, 'y', 6);
@@ -114,7 +114,7 @@ void fun5(bool IsRunning) {
 }
 void fun6(bool IsRunning) {
 	if (!IsRunning)return;
-	PrintSetup(7);
+	PrintTestTitle(7);
 	pUnks uk = NewUnk(3, 5);
 	uk = UnkInsert(uk, 2, 9);
 	uk = UnkInsert(uk, 5, 10);

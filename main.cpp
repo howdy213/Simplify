@@ -22,23 +22,22 @@ int main() {
 	printf("Simplify(a);\n");
 	ExpA.Print();
 	printf("Assign a=");
-	rational va = 0.0;
-	cin >> va;
+	string strVa;
+	cin >> strVa;
+	rational va = StringToNum(strVa);
+
 	ExpA.Assign(va);
 
 	while (1) {
 		system("cls");
 		ConsoleOp::gotoxy(0, 0);
-		cout <<"The value of a is:\n"<<ExpA.GetValue();
-		ConsoleOp::gotoxy(0, 5);
 		cout << "a:\n";
 		ExpA.Print();
-		ConsoleOp::gotoxy(0, 9);
-		printf("Assign x=                                                                                                                                                                        ");
-		ConsoleOp::gotoxy(10, 9);
-		rational vx = 0.0;
-		cin >> vx;
-		ExpX.Assign(vx);
+		cout << "\nThe value of a is:\n" << ExpA.GetValue() << "\nAssign x= \n";
+		string strVx;
+		cin >> strVx;
+		if (strVx == "quit")return 0;
+		ExpX.Assign(StringToNum(strVx));
 		ExpA.Culc();
 	}
 }

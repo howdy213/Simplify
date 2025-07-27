@@ -16,32 +16,33 @@ bool kd(int x) {
 	return(GetAsyncKeyState(x) & 0x8000) ? 1 : 0;
 }
 
-rational pow(rational x, integer y) {
-	if (y == 0)return 1;
-	bool sign = y > 0;
-	for (integer i = abs(y); i >= 2; i--)x *= x;
-	return sign ? x : 1 / x;
+rational pow(rational a, integer n) {
+	rational ans = 1;
+	while (n) {
+		if (n & 1)
+			ans *= a;
+		a *= a;
+		n >>= 1;
+	}
+	return ans;
 }
 
 rational StringToNum(string str) {
-	int dot = str.find('.');
-	if (dot == -1)return rational(str);
-	str = str.substr(0, dot) + str.substr(dot + 1);
-	rational res(str);
-	res /= pow(10, dot);
-	string a = res.convert_to<string>();
-	return res;
-	/*
-	int length = str.length();
-	length = (length >= 17) ? 17 : length;
-	rational num = 0.0;
-	int point = 0;
-	for (; point <= length - 1 && str[point] != '.'; point++)if (!(48 <= str[point] && str[point] <= 57))return 0;
-	for (int n = 0; n <= length - 1; n++) {
-		if (n == point)continue;
-		num += ((str[n] - 48) * pow(10, -n + point - (int)(n <= point)));
+	bool sign = true;
+	bool hasSign = false;
+	if (str[0] == '-' || str[0] == '+') {
+		hasSign = true;
+		if (str[0] == '-')sign = false;
+		str = str.substr(1);
 	}
-	return num;*/
+	int dot = str.find('.');
+	if (dot == -1)return sign ? rational(str) : -rational(str);
+	string str2 = str.substr(dot + 1);
+	if (str2.find('.') != -1)return false;
+	str = str.substr(0, dot) + str2;
+	rational res(str);
+	res /= pow(10, str.length() - dot);
+	return sign ? res : -res;
 }
 
 //从start至end(包括end),当mode==false时，代表倒数
@@ -173,6 +174,7 @@ int UnkLen(pUnks head) {
 	}
 	return len;
 }
+//ReHead 返回头指针
 pUnks UnkInsert(pUnks head, short unk, integer exp, bool ReHead) {
 	if (head == nullptr)return NewUnk(unk, exp);
 	pUnks rhead = head;
@@ -267,9 +269,9 @@ void MonClear(pMon one) {
 	one->coe = 0;
 	one->unks = nullptr;
 }
+//TODO:插入时自动排序，而非末尾
 pMon MonInsert(pMon mon, integer coe, pUnks unks) {
 	if (mon == nullptr)return NewMon(coe, unks);
-	pMon lmon = nullptr;
 	pMon rmon = mon;
 	if (IsUnksSame(mon->unks, unks)) {
 		mon->coe += coe;
@@ -288,10 +290,7 @@ pMon MonInsert(pMon mon, integer coe, pUnks unks) {
 			}
 			return rmon;
 		}
-		else {
-			lmon = mon;
-			mon = mon->next;
-		}
+		else mon = mon->next;
 	}
 	mon->next = NewMon(coe, unks);
 	return rmon;
@@ -303,7 +302,7 @@ pMon CopyMon(pMon one) {
 	back->unks = CopyUnks(one->unks);
 	return back;
 }
-pMon CharToMon(string exp) {
+pMon StringToMon(string exp) {
 	if (exp == "")return nullptr;
 	int coe = 0;
 	pUnks unks = nullptr;
@@ -387,6 +386,7 @@ void MonsPrint(pMon mons) {
 		mons = mons->next;
 	}
 }
+//TODO:在MonInsert重构能保证pMon有序性后，插入不再从头开始
 pMon MonsAdd(pMon first, pMon second) {
 	if (first == nullptr && second == nullptr)return nullptr;
 	if (first == nullptr || second == nullptr) {
@@ -399,7 +399,8 @@ pMon MonsAdd(pMon first, pMon second) {
 		second = second->next;
 	}
 	return res;
-};//+
+};
+//+
 pMon MonsOpp(pMon mon) {
 	pMon re = NewMon(mon->coe, mon->unks);
 	while (mon != nullptr) {
@@ -409,7 +410,7 @@ pMon MonsOpp(pMon mon) {
 	}
 	return re;
 }
-//
+//-
 pMon MonsSub(pMon first, pMon second) {
 	pMon opp = MonsOpp(second);
 	return MonsAdd(first, opp);
@@ -504,10 +505,11 @@ int Parse3_Root(pNode node) {
 void Parse3_End(pNode head, pPol pol) {
 	//()并不参加运算，所以要除去，[]/{}同理
 	//if (!head)return;
+	if (head == nullptr)assert(1);
 	if (head->exp != "")while (head->exp[head->exp.length() - 1] == ')' && FindBracket(head->exp.length() - 1, head->exp) == 0)SplitString(head->exp, 1, 1, head->exp, false);
 	//如果是单项式
-	if (CharToMon(head->exp) != nullptr) {
-		pol->exp[0] = CharToMon(head->exp);
+	if (StringToMon(head->exp) != nullptr) {
+		pol->exp[0] = StringToMon(head->exp);
 		pol->exp[1] = NewMon(1);
 		pol->op = NONE;
 		return;
